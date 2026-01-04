@@ -10,7 +10,7 @@ import { CartProvider } from '@/context/CartContext'
 import { PaymentProvider } from '@/context/PaymentContext'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
-const META_PIXEL_ID = '868874045516079'
+const META_PIXEL_ID = ''
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -79,8 +79,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <title>Pelúcia Menino Jesus que Respira | Acalma a Alma</title>
-        <meta name="description" content="Pelúcia Menino Jesus que Respira | Acalma a Alma" />
+        <title>Apoio à Manuela</title>
+        <meta name="description" content="Apoio à Manuela" />
         <meta name="robots" content="index, follow" />
 
         {/* ================================
