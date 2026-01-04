@@ -19,7 +19,6 @@ function clamp(n: number, min: number, max: number) {
 }
 
 function parseBRLInput(raw: string) {
-  // aceita: "50", "50,00", "R$ 50", "50.000,10"
   const cleaned = raw.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.').trim()
   const n = Number(cleaned)
   if (!Number.isFinite(n)) return 0
@@ -113,52 +112,47 @@ export default function Page() {
     else setName('')
   }
 
+  // Move useRouter() outside of useEffect
+  const router = useRouter();
+
   // Reinicia o timer ao abrir o modal
   useEffect(() => {
     if (showPixModal) setTimeLeft(300)
   }, [showPixModal])
 
-useEffect(() => {
-  if (!showPixModal) return;
+  useEffect(() => {
+    if (!showPixModal) return;
 
-  const extId = localStorage.getItem('external_id');
-  if (!extId) return;
+    const extId = localStorage.getItem('external_id');
+    if (!extId) return;
 
-  let stopped = false;
-  const router = useRouter();  // Instanciando o router do Next.js
+    let stopped = false;
 
-  const checkStatus = async () => {
-    try {
-      const res = await fetch(`/api/create-payment?externalId=${extId}`);
-      const data = await res.json();
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`/api/create-payment?externalId=${extId}`);
+        const data = await res.json();
 
-      if (data.status === 'PAID' || data.status === 'APPROVED') {
-        // Remove o external_id após pagamento confirmado
-        localStorage.removeItem('external_id');
-        
-        // Fecha o modal
-        setShowPixModal(false);
-
-        // Mostra uma mensagem de sucesso
-        setToast({ kind: 'ok', text: 'Pagamento confirmado! Obrigado por apoiar ❤️' });
-
-        // Redireciona para a página de sucesso
-        router.push('/sucesso');  // Redireciona para a página de sucesso
-      } else if (!stopped) {
-        setTimeout(checkStatus, 7000); // Verifica novamente em 7 segundos
+        if (data.status === 'PAID' || data.status === 'APPROVED') {
+          localStorage.removeItem('external_id');
+          setShowPixModal(false);
+          setToast({ kind: 'ok', text: 'Pagamento confirmado! Obrigado por apoiar ❤️' });
+          router.push('/sucesso');
+        } else if (!stopped) {
+          setTimeout(checkStatus, 7000);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar o status do pagamento:", error);
+        if (!stopped) setTimeout(checkStatus, 10000);
       }
-    } catch (error) {
-      console.error("Erro ao verificar o status do pagamento:", error);
-      if (!stopped) setTimeout(checkStatus, 10000); // Se erro, tenta novamente em 10 segundos
-    }
-  };
+    };
 
-  checkStatus();
+    checkStatus();
 
-  return () => {
-    stopped = true;
-  };
-}, [showPixModal]);
+    return () => {
+      stopped = true;
+    };
+  }, [showPixModal, router]); // Make sure router is added as a dependency here
 
   async function generatePix(amountValue: number) {
     setToast(null)
@@ -169,11 +163,8 @@ useEffect(() => {
       return
     }
 
-    // se não for anônimo, tenta garantir nome
     const supporterName = anon ? 'Doação Anônima' : name?.trim() || ''
-    if (!anon && supporterName.length < 2) {
-
-    }
+    if (!anon && supporterName.length < 2) { }
 
     setLoadingPix(true)
     try {
@@ -227,9 +218,9 @@ useEffect(() => {
   }
 
   async function onSubmit() {
-    // mantém o botão “Ajudar Agora” também gerando Pix (pra quem usar valor custom)
     await generatePix(selected ?? parseBRLInput(amountRaw))
   }
+
 
   return (
     <div className="min-h-screen bg-white text-[#111]">
@@ -569,10 +560,6 @@ useEffect(() => {
 
                   <div className="mt-4 text-center text-xs text-black/45">
                     Use o QR Code ou copie a chave PIX acima
-                  </div>
-
-                  <div className="mt-4 text-center text-sm text-black/60">
-                    Expira em <span className="font-bold text-black/70">{formatTime(timeLeft)}</span>
                   </div>
                 </div>
               </div>
